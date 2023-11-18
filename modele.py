@@ -9,17 +9,19 @@ import pandas as pd
 
 
 
+
 # ******************** Entrainement du modèle de Machine Learning ******************** #
 
+def initializeModel():
+    # Chargement du set de données :
+    iris = datasets.load_iris()
 
-# Chargement du set de données :
-iris = datasets.load_iris()
+    # Entrainement du modèle :
+    irisModel = RandomForestClassifier()
+    irisModel.fit(iris.data, iris.target)
+    joblib.dump(irisModel, 'modele.joblib')
+    return "modele re-initialise"
 
-
-# Entrainement du modèle :
-irisModel = RandomForestClassifier()
-irisModel.fit(iris.data, iris.target)
-joblib.dump(irisModel, 'modele.joblib')
 
 
 
@@ -29,6 +31,9 @@ joblib.dump(irisModel, 'modele.joblib')
 # *********************************** Méthode de calcul des prédictions *********************************** #
 
 def predict(sepal_length, sepal_width, petal_length, petal_width):
+
+    # Initialisation du set de données :
+    iris = datasets.load_iris()
 
     # Path du fichier ou est enregistré le modèle :
     model_file = Path(__file__).resolve(strict=True).parent.joinpath("modele.joblib")
@@ -48,6 +53,7 @@ def predict(sepal_length, sepal_width, petal_length, petal_width):
 
     # Renvoi des prédiction :
     return iris.target_names[forecast]
+
 
 
 

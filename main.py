@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from modele import predict
+from modele import predict, initializeModel
 
 
 
@@ -26,6 +26,30 @@ app = FastAPI()
 @app.get("/ping")
 async def pong():
     return {"ping": "pong!"}
+
+
+
+
+
+
+
+# *********************************** Route de l'Api qui initialise le modèle *********************************** #
+
+
+
+class StockOutInitialize(BaseModel):
+    succes: str
+
+
+
+# Route de l'Api qui initialise le modèle :
+@app.get("/initialize-model", response_model=StockOutInitialize, status_code=200)
+async def initialize():
+
+    # Ré-initialisation du modèle :
+    message = initializeModel()
+
+    return StockOutInitialize(succes=message)
 
 
 
