@@ -134,8 +134,7 @@ def load_model(payload: StockUserIn):
 
     # 2- Entrainement du modèle :
     # Chargement du set de données :
-    userDataset['data'].append([selected_sepal_length, selected_sepal_width, selected_petal_length,
-                        selected_petal_width])
+    userDataset['data'].append([selected_sepal_length, selected_sepal_width, selected_petal_length, selected_petal_width])
     userDataset['target'].append(generated_prediction)
 
     # Entrainement du modèle :
