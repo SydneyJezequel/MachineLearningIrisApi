@@ -1,7 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import List
+from sklearn.ensemble import RandomForestClassifier
+import joblib
 from modele import predict, initializeModel
+from bo import IrisData
 
+
+
+
+
+
+# *********************************** Commande pour démarrer l'application *********************************** #
+# uvicorn main:app --reload --workers 1 --host 0.0.0.0 --port 8008
 
 
 
@@ -17,9 +28,7 @@ app = FastAPI()
 
 
 
-
 # *********************************** Api de test *********************************** #
-
 
 
 # Route de test :
@@ -32,14 +41,11 @@ async def pong():
 
 
 
-
 # *********************************** Route de l'Api qui initialise le modèle *********************************** #
-
 
 
 class StockOutInitialize(BaseModel):
     succes: str
-
 
 
 # Route de l'Api qui initialise le modèle :
@@ -56,9 +62,7 @@ async def initialize():
 
 
 
-
 # *********************************** Route de l'Api qui appelle le modèle *********************************** #
-
 
 
 # Objet en entrée :
@@ -69,11 +73,9 @@ class StockIn(BaseModel):
         petal_width: float
 
 
-
 # Objet en sortie :
 class StockOut(StockIn):
     forecast: dict
-
 
 
 # Route de l'Api qui appelle le modèle :
@@ -103,69 +105,42 @@ def get_prediction(payload: StockIn):
 
 
 
-
-
 # *********************************** Route de l'Api qui entraine le modèle avec les prédictions qu'il produit *********************************** #
 
 
 # Objet en entrée :
 class StockUserIn(BaseModel):
-        selected_sepal_length: float
-        selected_sepal_width: float
-        selected_petal_length: float
-        selected_petal_width: float
-        generated_prediction: str
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ******************************************* TEST ******************************************* #
-# ******************************************* TEST ******************************************* #
-# ******************************************* TEST ******************************************* #
+    data_lines: List[IrisData]
 
 
 # Route de l'Api qui entraine le modèle avec les prédictions qu'il a produite :
 @app.post("/load-predict-in-model", status_code=200)
-def load_model(payload : StockUserIn):
-    # 1- Charger les données Java dans une structure de données pandas ou numpy
-        # Assurez-vous d'avoir les données d'entraînement et les étiquettes correspondantes
-        # par exemple, X_train, y_train = load_data_from_java()
-    for ligne in payload:
-        selected_sepal_length = ligne.sepal_length
-        selected_sepal_width = ligne.sepal_width
-        selected_petal_length = ligne.petal_length
-        selected_petal_width = ligne.petal_width
-        generated_prediction = ligne.prediction
+def load_model(payload: StockUserIn):
+    # 1- Chargement des données dans une structure de données :
+    userDataset = {'data': [], 'target': []}
+    for line in payload.data_lines:
+        selected_sepal_length = line.sepalLength
+        selected_sepal_width = line.sepalWidth
+        selected_petal_length = line.petalLength
+        selected_petal_width = line.petalWidth
+        generated_prediction = line.prediction
+        print(" ************** TEST ************** ")
+        print(line.sepalLength)
+        print(line.sepalWidth)
+        print(line.petalLength)
+        print(line.petalWidth)
+        print(line.prediction)
+        print(" ************** TEST ************** ")
 
     # 2- Entrainement du modèle :
     # Chargement du set de données :
-    userDataset.append([selected_sepal_length, selected_sepal_width, selected_petal_length,
-                        selected_petal_width, generated_prediction])
+    userDataset['data'].append([selected_sepal_length, selected_sepal_width, selected_petal_length,
+                        selected_petal_width])
+    userDataset['target'].append(generated_prediction)
 
     # Entrainement du modèle :
-    IrisModelTrainByUser = RandomForestClassifier()
-    IrisModelTrainByUser.fit(userDataset.data, userDataset.target)
-    joblib.dump(irisModel, 'IrisModelTrainByUser.joblib')
-
-
-
-
-# ******************************************* TEST ******************************************* #
-# ******************************************* TEST ******************************************* #
-# ******************************************* TEST ******************************************* #
-
-
-
-
-
+    modele = RandomForestClassifier()
+    modele.fit(userDataset['data'], userDataset['target'])
+    joblib.dump(modele, 'modele.joblib')
 
 
