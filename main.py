@@ -4,7 +4,7 @@ from typing import List
 from sklearn.ensemble import RandomForestClassifier
 import joblib
 from modele import predict, initializeModel
-from bo import IrisData
+from bo import IrisData, initializeDataSet
 
 
 
@@ -30,7 +30,6 @@ app = FastAPI()
 
 # *********************************** Api de test *********************************** #
 
-
 # Route de test :
 @app.get("/ping")
 async def pong():
@@ -42,7 +41,6 @@ async def pong():
 
 
 # *********************************** Route de l'Api qui initialise le modèle *********************************** #
-
 
 class StockOutInitialize(BaseModel):
     succes: str
@@ -63,7 +61,6 @@ async def initialize():
 
 
 # *********************************** Route de l'Api qui appelle le modèle *********************************** #
-
 
 # Objet en entrée :
 class StockIn(BaseModel):
@@ -96,7 +93,7 @@ def get_prediction(payload: StockIn):
         sepal_width=payload.sepal_width,
         petal_length=payload.petal_length,
         petal_width=payload.petal_width,
-        forecast={'response': prediction_list[0]}
+        forecast={'response': prediction_list}
     )
     return response_object
 
@@ -107,7 +104,6 @@ def get_prediction(payload: StockIn):
 
 # *********************************** Route de l'Api qui entraine le modèle avec les prédictions qu'il produit *********************************** #
 
-
 # Objet en entrée :
 class StockUserIn(BaseModel):
     data_lines: List[IrisData]
@@ -116,30 +112,56 @@ class StockUserIn(BaseModel):
 # Route de l'Api qui entraine le modèle avec les prédictions qu'il a produite :
 @app.post("/load-predict-in-model", status_code=200)
 def load_model(payload: StockUserIn):
-    # 1- Chargement des données dans une structure de données :
-    userDataset = {'data': [], 'target': []}
+    # 1- Initialisation de la structure de données :
+    bo_iris = initializeDataSet()
+
+    # Dictionnaire pour stocker la correspondance entre les prédictions et les cibles
+    target_names_numbers = {}
+
+    # 2- Chargement des données dans une structure de données :
     for line in payload.data_lines:
-        selected_sepal_length = line.sepalLength
-        selected_sepal_width = line.sepalWidth
-        selected_petal_length = line.petalLength
-        selected_petal_width = line.petalWidth
-        generated_prediction = line.prediction
         print(" ************** TEST ************** ")
-        print(line.sepalLength)
-        print(line.sepalWidth)
-        print(line.petalLength)
-        print(line.petalWidth)
-        print(line.prediction)
+        print('sepal length ', line.sepalLength)
+        print('sepal width ', line.sepalWidth)
+        print('petal length ', line.petalLength)
+        print('petal width ', line.petalWidth)
+        print('prediction ', line.prediction)
         print(" ************** TEST ************** ")
+        # Intégration des données dans le dataset :
+        bo_iris['data'].append([line.sepalLength, line.sepalWidth, line.petalLength, line.petalWidth])
 
-    # 2- Entrainement du modèle :
-    # Chargement du set de données :
-    userDataset['data'].append([selected_sepal_length, selected_sepal_width, selected_petal_length, selected_petal_width])
-    userDataset['target'].append(generated_prediction)
+    #############################################################################
+    # TRAITEMENT POUR DEFINIR LES TARGET (nombre d'étiquettes) ET TARGET_NAMES (étiquettes) :
+    #############################################################################
+        if line.prediction not in bo_iris['target_names']:
+            # Ajoute la nouvelle prédiction à target_names :
+            bo_iris['target_names'].append(line.prediction)
+            # Trouve le chiffre le plus élevé dans target et ajoute targetMax + 1 :
+            max_target = max(bo_iris['target'], default=0)
+            bo_iris['target'].append(max_target + 1)
+            # Actualiser le dictionnaire :
+            target_names_numbers[line.prediction] = max_target + 1
+        else:
+            # On récupère la target correspondant au target_name via le dictionnaire :
+            target = target_names_numbers[line.prediction]
+            # On actualise la target :
+            bo_iris['target'].append(target)
+    # A la fin de la boucle : On trie le tableau en ordre croissant :
+    bo_iris['target'].sort()
+    #############################################################################
+    # TRAITEMENT POUR
+    #############################################################################
+    print(" ************** TEST ************** ")
+    print('bo_iris[data]', bo_iris['data'])
+    print('bo_iris[target] ', bo_iris['target'])
+    print('bo_iris[target_names]', bo_iris['target_names'])
+    print(" ************** TEST ************** ")
 
-    # Entrainement du modèle :
-    modele = RandomForestClassifier()
-    modele.fit(userDataset['data'], userDataset['target'])
-    joblib.dump(modele, 'modele.joblib')
-
+    # 3- Entrainement du modèle :
+    if bo_iris['data'] and bo_iris['target']:
+        modele = RandomForestClassifier()
+        modele.fit(bo_iris['data'], bo_iris['target'])
+        joblib.dump(modele, 'modele.joblib')
+    else:
+        print("Aucune donnée disponible pour l'entraînement du modèle.")
 
