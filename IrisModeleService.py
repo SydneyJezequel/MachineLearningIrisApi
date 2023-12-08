@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 import joblib
 from pathlib import Path
 import pandas as pd
-from IrisBo import iris_data as bo_iris, StockUserIn
+from IrisBo import iris_data as bo_iris, StockUserIn, IrisData, StockOutIrisDataSet
 
 
 
@@ -183,4 +183,42 @@ def load_new_data_set(payload: StockUserIn):
         print("Aucune donnée disponible pour l'entraînement du modèle.")
 
 
+
+
+
+
+
+
+# ****************************************************************************************************************************** #
+# ******************************* Méthode renvoie le dataset de classification des Iris ************************************* #
+# ****************************************************************************************************************************** #
+
+def get_iris_data_set():
+
+    # Chargement du set de données de base :
+    iris_dataset = datasets.load_iris()
+
+    # Récupération des caractéristiques (data) et des étiquettes (target)
+    data = iris_dataset.data
+    target = iris_dataset.target
+
+    # Création de la liste d'IrisData
+    iris_data_list = []
+    for i in range(len(data)):
+        iris_data = IrisData(
+            sepalLength=data[i, 0],
+            sepalWidth=data[i, 1],
+            petalLength=data[i, 2],
+            petalWidth=data[i, 3],
+            prediction=iris_dataset.target_names[target[i]]
+        )
+        iris_data_list.append(iris_data)
+
+    # Création de l'objet StockOutIrisDataSet
+    stock_out_iris_data_set = StockOutIrisDataSet(data_lines=iris_data_list)
+
+    # log :
+    print(stock_out_iris_data_set)
+
+    return stock_out_iris_data_set
 

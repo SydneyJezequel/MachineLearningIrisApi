@@ -80,3 +80,9 @@ class StockUserIn(BaseModel):
     data_lines: List[IrisData]
 
 
+
+
+# *********************  Api "/predict"    |     Méthode : send_iris_data_set() *********************
+class StockOutIrisDataSet(BaseModel):
+    data_lines: List[IrisData]
+

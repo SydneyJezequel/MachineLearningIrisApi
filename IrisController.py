@@ -1,8 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from IrisModeleService import predict, initializeModel, load_new_data_set
-from IrisBo import StockOutInitialize, StockIn, StockOut, StockUserIn
-
-
+from IrisModeleService import predict, initializeModel, load_new_data_set, get_iris_data_set
+from IrisBo import StockOutInitialize, StockIn, StockOut, StockUserIn, StockOutIrisDataSet
 
 
 
@@ -109,4 +107,21 @@ def get_prediction(payload: StockIn):
 @app.post("/load-predict-in-model", status_code=200)
 def load_model(payload: StockUserIn):
     load_new_data_set(payload)
+
+
+
+
+
+
+
+
+# ****************************************************************************************************************************** #
+# ******************************************* Route de l'Api qui initialise le modèle ****************************************** #
+# ****************************************************************************************************************************** #
+
+@app.get("/get-iris-dataset", response_model=StockOutIrisDataSet, status_code=200)
+def send_iris_data_set():
+    iris_data_set = get_iris_data_set()
+    return iris_data_set
+
 
