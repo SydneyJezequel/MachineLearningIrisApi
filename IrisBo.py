@@ -6,12 +6,7 @@ from typing import List
 
 
 
-
-
-# ************************************************************************************************************** #
-# ************************** Structure et Initialisation du DataSet (Variable globale) ************************* #
-# ************************************************************************************************************** #
-
+""" Structure du DataSet (Variable globale) """
 iris_data = {
     'data': [],
     'target': [],
@@ -22,15 +17,7 @@ iris_data = {
 
 
 
-
-
-
-
-
-# ******************************************************************************************************************** #
-# ********************************************** Structure Dataset Excel/Csv ***************************************** #
-# ******************************************************************************************************************** #
-
+""" Structure du Dataset au format Excel/Csv """
 class IrisData(BaseModel):
     sepalLength: float
     sepalWidth: float
@@ -43,24 +30,16 @@ class IrisData(BaseModel):
 
 
 
+""" *********************************** Paramètres des API *********************************** """
 
 
-# ************************************************************************************************************** #
-# ********************************************* Paramètres des API ********************************************* #
-# ************************************************************************************************************** #
-
-
-
-
-# ********************** Api "/initialize-model"     |     Méthode : initialize() ********************
+"""  Api "/initialize-model"   |   Méthode : initialize() """
 class StockOutInitialize(BaseModel):
     succes: str
 
 
 
-
-# ***************** Api "/predict"    |     Méthode : get_prediction(payload: StockIn) *******************
-
+""" Api "/predict"  |   Méthode : get_prediction(payload: StockIn) """
 # Objet en entrée :
 class StockIn(BaseModel):
         sepal_length: float
@@ -74,15 +53,13 @@ class StockOut(StockIn):
 
 
 
-
-# *********************  Api "/predict"    |     Méthode : get_prediction(payload: StockIn) *********************
+""" Api "/predict"  |   Méthode : get_prediction(payload: StockIn) """
 class StockUserIn(BaseModel):
     data_lines: List[IrisData]
 
 
 
-
-# *********************  Api "/predict"    |     Méthode : send_iris_data_set() *********************
+""" Api "/predict"  |   Méthode : send_iris_data_set() """
 class StockOutIrisDataSet(BaseModel):
     data_lines: List[IrisData]
 
