@@ -20,8 +20,6 @@ from IrisBo import StockOutInitialize, StockIn, StockOut, StockUserIn, StockOutI
 """ ********************************** Méthodes ********************************** """
 
 
-
-
 """ Chargement de l'Api """
 app = FastAPI()
 
