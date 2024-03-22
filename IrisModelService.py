@@ -10,9 +10,8 @@ from IrisBo import iris_data as bo_iris, StockUserIn, IrisData, StockOutIrisData
 
 
 
-""" Service qui manipule le modèle Random Forest """
 class IrisModelService:
-
+    """ Service qui manipule le modèle Random Forest """
 
 
 
@@ -22,6 +21,7 @@ class IrisModelService:
     _instance = None
 
     def __new__(cls):
+        """ Constructeur """
         if cls._instance is None:
             cls._instance = super(IrisModelService, cls).__new__(cls)
         return cls._instance
@@ -33,8 +33,8 @@ class IrisModelService:
 
     """ ************************ Méthodes ************************ """
 
-    """ Méthode qui initialise le modèle """
     def initializeModel(self):
+        """ Méthode qui initialise le modèle """
         # Purge de la structure du dataset :
         bo_iris = self.initializeDataSet()
         # Chargement du set de données de base :
@@ -51,23 +51,18 @@ class IrisModelService:
 
 
 
-    """ Méthode qui calcule les prédictions """
     def predict(self, sepal_length, sepal_width, petal_length, petal_width):
-
-        print("****************** TEST ******************** ")
+        """ Méthode qui calcule les prédictions """
         print("Data : ", bo_iris['data'])
         print("Target : ", bo_iris['target'])
         print("Description du dataset : ", bo_iris['DESCR'])
         print("Variables indépendantes (features) : ",  bo_iris['feature_names'])
         print("Noms des prédictions: ", bo_iris['target_names'])
-        print("****************** TEST ******************** ")
-
         # Path du fichier ou est enregistré le modèle :
         model_file = Path(__file__).resolve(strict=True).parent.joinpath("modele.joblib")
         # Si le modèle n'est pas sauvegardé :
         if not model_file.exists():
             return False
-
         # Charger le modèle :
         model = joblib.load("modele.joblib")
         # Encapsulation des paramètres dans un dictionnaire :
@@ -81,8 +76,8 @@ class IrisModelService:
 
 
 
-    """ Méthode qui encapsule les paramètres dans un dictionnaire """
     def input(self, sepal_length, sepal_width, petal_length, petal_width):
+        """ Méthode qui encapsule les paramètres dans un dictionnaire """
         # Encapsulation des paramètres dans un dictionnaire :
         data = {
             'sepal_length': sepal_length,
@@ -97,8 +92,8 @@ class IrisModelService:
 
 
 
-    """ Méthode qui ré-initialise les valeurs DataSet à 0 """
     def initializeDataSet(self):
+        """ Méthode qui ré-initialise les valeurs DataSet à 0 """
         # Ré-initialisation du dataSet :
         bo_iris['data'] = []
         bo_iris['target'] = []
@@ -107,8 +102,8 @@ class IrisModelService:
 
 
 
-    """ Méthode qui charge et entraine un nouveau jeu de données """
     def load_new_data_set(self, payload: StockUserIn):
+        """ Méthode qui charge et entraine un nouveau jeu de données """
 
         # 1- Initialisation de la structure de données :
         bo_iris = self.initializeDataSet()
@@ -117,16 +112,13 @@ class IrisModelService:
 
         # 2- Chargement des données dans une structure de données :
         for line in payload.data_lines:
-            print(" ************** TEST ************** ")
             print('sepal length ', line.sepalLength)
             print('sepal width ', line.sepalWidth)
             print('petal length ', line.petalLength)
             print('petal width ', line.petalWidth)
             print('prediction ', line.prediction)
-            print(" ************** TEST ************** ")
             # Intégration des données dans le dataset :
             bo_iris['data'].append([line.sepalLength, line.sepalWidth, line.petalLength, line.petalWidth])
-
             # Traitement pour définir les Targets (nombre d'étiquettes) et les Targets_names (étiquettes) :
             if line.prediction not in bo_iris['target_names']:
                 # Ajoute la nouvelle prédiction à target_names :
@@ -148,12 +140,9 @@ class IrisModelService:
                 bo_iris['target'].append(target)
         # A la fin de la boucle : On trie le tableau en ordre croissant :
         bo_iris['target'].sort()
-
-        print(" ************** TEST ************** ")
         print('bo_iris[data]', bo_iris['data'])
         print('bo_iris[target] ', bo_iris['target'])
         print('bo_iris[target_names]', bo_iris['target_names'])
-        print(" ************** TEST ************** ")
 
         # 3- Entrainement du modèle :
         if bo_iris['data'] and bo_iris['target']:
@@ -165,16 +154,13 @@ class IrisModelService:
 
 
 
-    """ Méthode qui renvoie le dataset de classification des Iris"""
     def get_iris_data_set(self):
-
+        """ Méthode qui renvoie le dataset de classification des Iris"""
         # Chargement du set de données de base :
         iris_dataset = datasets.load_iris()
-
         # Récupération des caractéristiques (data) et des étiquettes (target)
         data = iris_dataset.data
         target = iris_dataset.target
-
         # Création de la liste d'IrisData
         iris_data_list = []
         for i in range(len(data)):
@@ -186,12 +172,9 @@ class IrisModelService:
                 prediction=iris_dataset.target_names[target[i]]
             )
             iris_data_list.append(iris_data)
-
         # Création de l'objet StockOutIrisDataSet
         stock_out_iris_data_set = StockOutIrisDataSet(data_lines=iris_data_list)
-
         # log :
         print(stock_out_iris_data_set)
-
         return stock_out_iris_data_set
 

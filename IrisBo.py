@@ -6,8 +6,8 @@ from typing import List
 
 
 
-""" Structure du DataSet (Variable globale) """
 iris_data = {
+    """ Structure du DataSet (Variable globale) """
     'data': [],
     'target': [],
     'feature_names': ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)'],
@@ -17,8 +17,9 @@ iris_data = {
 
 
 
-""" Structure du Dataset au format Excel/Csv """
+
 class IrisData(BaseModel):
+    """ Structure du Dataset au format Excel/Csv """
     sepalLength: float
     sepalWidth: float
     petalLength: float
@@ -33,33 +34,38 @@ class IrisData(BaseModel):
 """ *********************************** Paramètres des API *********************************** """
 
 
-"""  Api "/initialize-model"   |   Méthode : initialize() """
 class StockOutInitialize(BaseModel):
+    """  Controller : initialize() """
     succes: str
 
 
 
-""" Api "/predict"  |   Méthode : get_prediction(payload: StockIn) """
-# Objet en entrée :
-class StockIn(BaseModel):
-        sepal_length: float
-        sepal_width: float
-        petal_length: float
-        petal_width: float
 
-# Objet en sortie :
+class StockIn(BaseModel):
+    """ Controller : get_prediction(payload: StockIn) | Objet en entrée """
+    sepal_length: float
+    sepal_width: float
+    petal_length: float
+    petal_width: float
+
+
+
+
 class StockOut(StockIn):
+    """ Controller : get_prediction(payload: StockIn) | Objet en sortie """
     forecast: dict
 
 
 
-""" Api "/predict"  |   Méthode : get_prediction(payload: StockIn) """
+
 class StockUserIn(BaseModel):
+    """ Controller : get_prediction(payload: StockIn) | Objet en entrée"""
     data_lines: List[IrisData]
 
 
 
-""" Api "/predict"  |   Méthode : send_iris_data_set() """
+
 class StockOutIrisDataSet(BaseModel):
+    """ Controller send_iris_data_set() | Objet en sortie """
     data_lines: List[IrisData]
 
