@@ -1,9 +1,13 @@
+import os
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
 import joblib
 from pathlib import Path
 import pandas as pd
-from IrisBo import iris_data as bo_iris, StockUserIn, IrisData, StockOutIrisDataSet
+from BO.IrisDataStructure import iris_data_structure
+from BO.TrainDataset import TrainDataset
+from BO.IrisData import IrisData
+from BO.IrisDataSetLines import IrisDataSetLines
 
 
 
@@ -36,43 +40,52 @@ class IrisModelService:
     def initializeModel(self):
         """ Méthode qui initialise le modèle """
         # Purge de la structure du dataset :
-        bo_iris = self.initializeDataSet()
+        iris_data_structure = self.initializeDataSet()
         # Chargement du set de données de base :
         iris_dataset = datasets.load_iris()
-        # Chargement des 'data' et 'target' dans la structure 'bo_iris' :
-        bo_iris['data'] = iris_dataset.data.tolist()
-        bo_iris['target'] = iris_dataset.target.tolist()
-        bo_iris['target_names'] = iris_dataset.target_names.tolist()
+        # Chargement des 'data' et 'target' dans la structure 'iris_data_structure' :
+        iris_data_structure['data'] = iris_dataset.data.tolist()
+        iris_data_structure['target'] = iris_dataset.target.tolist()
+        iris_data_structure['target_names'] = iris_dataset.target_names.tolist()
         # Entrainement du modèle :
         irisModel = RandomForestClassifier()
-        irisModel.fit(bo_iris['data'], bo_iris['target'])
-        joblib.dump(irisModel, 'modele.joblib')
+        irisModel.fit(iris_data_structure['data'], iris_data_structure['target'])
+        # Chargement du modèle sous la forme d'un fichier dans le directory 'resources' :
+        root_directory = self.get_project_root()
+        resources_directory = root_directory.joinpath("resources")
+        os.makedirs(resources_directory, exist_ok=True)
+        model_file = resources_directory.joinpath("modele.joblib")
+        joblib.dump(irisModel, model_file)
         return "modele re-initialise"
 
 
 
     def predict(self, sepal_length, sepal_width, petal_length, petal_width):
         """ Méthode qui calcule les prédictions """
-        print("Data : ", bo_iris['data'])
-        print("Target : ", bo_iris['target'])
-        print("Description du dataset : ", bo_iris['DESCR'])
-        print("Variables indépendantes (features) : ",  bo_iris['feature_names'])
-        print("Noms des prédictions: ", bo_iris['target_names'])
+        print("Data : ", iris_data_structure['data'])
+        print("Target : ", iris_data_structure['target'])
+        print("Description du dataset : ", iris_data_structure['DESCR'])
+        print("Variables indépendantes (features) : ",  iris_data_structure['feature_names'])
+        print("Noms des prédictions: ", iris_data_structure['target_names'])
         # Path du fichier ou est enregistré le modèle :
-        model_file = Path(__file__).resolve(strict=True).parent.joinpath("modele.joblib")
+        root_directory = self.get_project_root()
+        resources_directory = root_directory.joinpath("resources")
+        os.makedirs(resources_directory, exist_ok=True)
+        model = resources_directory.joinpath("modele.joblib")
         # Si le modèle n'est pas sauvegardé :
-        if not model_file.exists():
+        if not model.exists():
             return False
         # Charger le modèle :
-        model = joblib.load("modele.joblib")
+        model = joblib.load(model)
         # Encapsulation des paramètres dans un dictionnaire :
         parametres_iris = self.input(sepal_length, sepal_width, petal_length, petal_width)
         # Exécution du modèle :
         forecast = model.predict(parametres_iris)
+        print("PREDICTION : ", forecast)
         # On récupère le forecast :
         forecast = int(forecast[0])
         # Renvoi des prédiction :
-        return bo_iris['target_names'][forecast]
+        return iris_data_structure['target_names'][forecast]
 
 
 
@@ -86,27 +99,27 @@ class IrisModelService:
             'petal_width': petal_width
         }
         # Intégration dans le Dataframe :
-        parametres = pd.DataFrame(data, index=[0])
+        parameters = pd.DataFrame(data, index=[0])
         # Renvoie des paramètres :
-        return parametres
+        return parameters
 
 
 
     def initializeDataSet(self):
         """ Méthode qui ré-initialise les valeurs DataSet à 0 """
         # Ré-initialisation du dataSet :
-        bo_iris['data'] = []
-        bo_iris['target'] = []
-        bo_iris['target_names'] = []
-        return bo_iris
+        iris_data_structure['data'] = []
+        iris_data_structure['target'] = []
+        iris_data_structure['target_names'] = []
+        return iris_data_structure
 
 
 
-    def load_new_data_set(self, payload: StockUserIn):
+    def load_new_data_set(self, payload: TrainDataset):
         """ Méthode qui charge et entraine un nouveau jeu de données """
 
         # 1- Initialisation de la structure de données :
-        bo_iris = self.initializeDataSet()
+        iris_data_structure = self.initializeDataSet()
         # Dictionnaire pour stocker la correspondance entre les prédictions et les cibles
         target_names_numbers = {}
 
@@ -118,36 +131,36 @@ class IrisModelService:
             print('petal width ', line.petalWidth)
             print('prediction ', line.prediction)
             # Intégration des données dans le dataset :
-            bo_iris['data'].append([line.sepalLength, line.sepalWidth, line.petalLength, line.petalWidth])
+            iris_data_structure['data'].append([line.sepalLength, line.sepalWidth, line.petalLength, line.petalWidth])
             # Traitement pour définir les Targets (nombre d'étiquettes) et les Targets_names (étiquettes) :
-            if line.prediction not in bo_iris['target_names']:
+            if line.prediction not in iris_data_structure['target_names']:
                 # Ajoute la nouvelle prédiction à target_names :
-                bo_iris['target_names'].append(line.prediction)
+                iris_data_structure['target_names'].append(line.prediction)
                 # Initialisation avec la première target à 0 :
-                if not bo_iris['target']:
-                    bo_iris['target'].append(0)
+                if not iris_data_structure['target']:
+                    iris_data_structure['target'].append(0)
                     target_names_numbers[line.prediction] = 0
                 # Initialisation avec les targets suivantes :
                 else:
-                    max_target = max(bo_iris['target'], default=0)
-                    bo_iris['target'].append(max_target + 1)
+                    max_target = max(iris_data_structure['target'], default=0)
+                    iris_data_structure['target'].append(max_target + 1)
                     # Actualiser le dictionnaire :
                     target_names_numbers[line.prediction] = max_target + 1
             else:
                 # On récupère la target correspondant au target_name via le dictionnaire :
                 target = target_names_numbers[line.prediction]
                 # On actualise la target :
-                bo_iris['target'].append(target)
+                iris_data_structure['target'].append(target)
         # A la fin de la boucle : On trie le tableau en ordre croissant :
-        bo_iris['target'].sort()
-        print('bo_iris[data]', bo_iris['data'])
-        print('bo_iris[target] ', bo_iris['target'])
-        print('bo_iris[target_names]', bo_iris['target_names'])
+        iris_data_structure['target'].sort()
+        print('iris_data_structure[data]', iris_data_structure['data'])
+        print('iris_data_structure[target] ', iris_data_structure['target'])
+        print('iris_data_structure[target_names]', iris_data_structure['target_names'])
 
         # 3- Entrainement du modèle :
-        if bo_iris['data'] and bo_iris['target']:
+        if iris_data_structure['data'] and iris_data_structure['target']:
             modele = RandomForestClassifier()
-            modele.fit(bo_iris['data'], bo_iris['target'])
+            modele.fit(iris_data_structure['data'], iris_data_structure['target'])
             joblib.dump(modele, 'modele.joblib')
         else:
             print("Aucune donnée disponible pour l'entraînement du modèle.")
@@ -173,8 +186,14 @@ class IrisModelService:
             )
             iris_data_list.append(iris_data)
         # Création de l'objet StockOutIrisDataSet
-        stock_out_iris_data_set = StockOutIrisDataSet(data_lines=iris_data_list)
+        stock_out_iris_data_set = IrisDataSetLines(data_lines=iris_data_list)
         # log :
         print(stock_out_iris_data_set)
         return stock_out_iris_data_set
+
+
+
+    def get_project_root(self) -> Path:
+        """ Méthode qui retourne le chemin racine du projet """
+        return Path(__file__).resolve(strict=True).parent.parent
 

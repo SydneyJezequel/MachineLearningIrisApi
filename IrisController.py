@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from IrisModelService import IrisModelService
-from IrisBo import StockOutInitialize, StockIn, StockOut, StockUserIn, StockOutIrisDataSet
+from service.IrisModelService import IrisModelService
+from BO.ModelInitialize import ModelInitialize
+from BO.Parameters import Parameters
+from BO.Prediction import Prediction
+from BO.TrainDataset import TrainDataset
+from BO.IrisDataSetLines import IrisDataSetLines
 
 
 
@@ -35,21 +39,19 @@ async def pong():
 
 
 
-
-@app.get("/initialize-model", response_model=StockOutInitialize, status_code=200)
+@app.get("/initialize-model", response_model=ModelInitialize, status_code=200)
 async def initialize():
     """ Controller qui initialise le modèle """
     # Instanciation du service :
     iris_model_service_instance = IrisModelService()
     # Ré-initialisation du modèle :
     message = iris_model_service_instance.initializeModel()
-    return StockOutInitialize(succes=message)
+    return ModelInitialize(succes=message)
 
 
 
-
-@app.post("/predict", response_model=StockOut, status_code=200)
-def get_prediction(payload: StockIn):
+@app.post("/predict", response_model=Prediction, status_code=200)
+def get_prediction(payload: Parameters):
     """ Controller qui gère les prédictions """
     # Instanciation du service :
     iris_model_service_instance = IrisModelService()
@@ -60,7 +62,7 @@ def get_prediction(payload: StockIn):
     if not prediction_list:
         raise HTTPException(status_code=400, detail="Model not found.")
     # Renvoie du résultat :
-    response_object = StockOut(
+    response_object = Prediction(
         sepal_length=payload.sepal_length,
         sepal_width=payload.sepal_width,
         petal_length=payload.petal_length,
@@ -71,9 +73,8 @@ def get_prediction(payload: StockIn):
 
 
 
-
 @app.post("/load-predict-in-model", status_code=200)
-def load_model(payload: StockUserIn):
+def load_model(payload: TrainDataset):
     """ Controller qui entraine le modèle """
     # Instanciation du service :
     iris_model_service_instance = IrisModelService()
@@ -82,13 +83,12 @@ def load_model(payload: StockUserIn):
 
 
 
-
-@app.get("/get-iris-dataset", response_model=StockOutIrisDataSet, status_code=200)
+@app.get("/get-iris-dataset", response_model=IrisDataSetLines, status_code=200)
 def send_iris_data_set():
-    """ Controller qui initialise le modèle """
+    """ Controller qui récupère le dataset des Iris """
     # Instanciation du service :
     iris_model_service_instance = IrisModelService()
-    # Initialisation du modèle :
+    # Récupération du dataset des Iris :
     iris_data_set = iris_model_service_instance.get_iris_data_set()
     return iris_data_set
 
