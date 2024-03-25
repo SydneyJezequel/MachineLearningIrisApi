@@ -1,9 +1,9 @@
 import os
+import joblib
+import pandas as pd
+import config
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
-import joblib
-from pathlib import Path
-import pandas as pd
 from BO.IrisDataStructure import iris_data_structure
 from BO.TrainDataset import TrainDataset
 from BO.IrisData import IrisData
@@ -34,7 +34,6 @@ class IrisModelService:
 
 
 
-
     """ ************************ Méthodes ************************ """
 
     def initializeModel(self):
@@ -50,12 +49,10 @@ class IrisModelService:
         # Entrainement du modèle :
         irisModel = RandomForestClassifier()
         irisModel.fit(iris_data_structure['data'], iris_data_structure['target'])
-        # Chargement du modèle sous la forme d'un fichier dans le directory 'resources' :
-        root_directory = self.get_project_root()
-        resources_directory = root_directory.joinpath("resources")
-        os.makedirs(resources_directory, exist_ok=True)
-        model_file = resources_directory.joinpath("modele.joblib")
+        # Sauvegarde du modèle :
+        model_file = config.MODEL_PATH
         joblib.dump(irisModel, model_file)
+        # Message de fin :
         return "modele re-initialise"
 
 
@@ -67,25 +64,21 @@ class IrisModelService:
         print("Description du dataset : ", iris_data_structure['DESCR'])
         print("Variables indépendantes (features) : ",  iris_data_structure['feature_names'])
         print("Noms des prédictions: ", iris_data_structure['target_names'])
-        # Path du fichier ou est enregistré le modèle :
-        root_directory = self.get_project_root()
-        resources_directory = root_directory.joinpath("resources")
-        os.makedirs(resources_directory, exist_ok=True)
-        model = resources_directory.joinpath("modele.joblib")
+        # Chargement du modèle :
+        model_file = config.MODEL_PATH
         # Si le modèle n'est pas sauvegardé :
-        if not model.exists():
+        if not os.path.exists(model_file):
             return False
-        # Charger le modèle :
-        model = joblib.load(model)
+        model = joblib.load(model_file)
         # Encapsulation des paramètres dans un dictionnaire :
         parametres_iris = self.input(sepal_length, sepal_width, petal_length, petal_width)
         # Exécution du modèle :
-        forecast = model.predict(parametres_iris)
-        print("PREDICTION : ", forecast)
+        prediction = model.predict(parametres_iris)
+        print("PREDICTION : ", prediction)
         # On récupère le forecast :
-        forecast = int(forecast[0])
+        prediction = int(prediction[0])
         # Renvoi des prédiction :
-        return iris_data_structure['target_names'][forecast]
+        return iris_data_structure['target_names'][prediction]
 
 
 
@@ -117,12 +110,10 @@ class IrisModelService:
 
     def load_new_data_set(self, payload: TrainDataset):
         """ Méthode qui charge et entraine un nouveau jeu de données """
-
         # 1- Initialisation de la structure de données :
         iris_data_structure = self.initializeDataSet()
         # Dictionnaire pour stocker la correspondance entre les prédictions et les cibles
         target_names_numbers = {}
-
         # 2- Chargement des données dans une structure de données :
         for line in payload.data_lines:
             print('sepal length ', line.sepalLength)
@@ -156,7 +147,6 @@ class IrisModelService:
         print('iris_data_structure[data]', iris_data_structure['data'])
         print('iris_data_structure[target] ', iris_data_structure['target'])
         print('iris_data_structure[target_names]', iris_data_structure['target_names'])
-
         # 3- Entrainement du modèle :
         if iris_data_structure['data'] and iris_data_structure['target']:
             modele = RandomForestClassifier()
@@ -190,10 +180,4 @@ class IrisModelService:
         # log :
         print(stock_out_iris_data_set)
         return stock_out_iris_data_set
-
-
-
-    def get_project_root(self) -> Path:
-        """ Méthode qui retourne le chemin racine du projet """
-        return Path(__file__).resolve(strict=True).parent.parent
 
