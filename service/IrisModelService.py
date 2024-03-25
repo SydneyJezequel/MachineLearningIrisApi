@@ -151,7 +151,7 @@ class IrisModelService:
         if iris_data_structure['data'] and iris_data_structure['target']:
             modele = RandomForestClassifier()
             modele.fit(iris_data_structure['data'], iris_data_structure['target'])
-            joblib.dump(modele, 'modele.joblib')
+            joblib.dump(modele, config.MODEL_PATH)
         else:
             print("Aucune donnée disponible pour l'entraînement du modèle.")
 
